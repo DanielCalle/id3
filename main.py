@@ -9,7 +9,20 @@ class ID3:
         df = pd.concat([df_head, df_data])
         df.columns = df.iloc[0]
         df = df.drop(0)
-        print(df["Jugar"].value_counts())
+
+        for column in df:
+            merito = "mérito(" + column + ") = "
+            for key, value in df[column].value_counts().items():
+                merito = merito + str(value) + "/" + str(len(df)) + " + "
+                merito = merito + "infor("
+                salidas = (df.loc[df[column] == key])["Jugar"]
+                for c in salidas.value_counts():
+                    merito = merito + str(c) + "/" + str(len(salidas)) + ","
+                merito = merito[:-1]
+                merito = merito + ")" + " + "
+
+            merito = merito[:-3]
+            print(merito)
 
 
 
