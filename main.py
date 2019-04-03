@@ -18,17 +18,17 @@ class Node:
         return self.childs
 
 
-def mejor_merito(atributos, ejemplos):
-    N = len(ejemplos)
-    M = len(atributos) - 1
-    meritos = [{} for i in range(M)]
+def best_merit(attributes, examples):
+    N = len(examples)
+    M = len(attributes) - 1
+    merit = [{} for i in range(M)]
     tp = 0
     tn = 0
-    for ejemplo in ejemplos:
+    for example in examples:
         p = 0
         n = 0
 
-        if ejemplo[M] == "si":
+        if example[M] == "si":
             p = 1
             tp = tp + 1
         else:
@@ -36,29 +36,29 @@ def mejor_merito(atributos, ejemplos):
             tn = tn + 1
 
         for i in range(M):
-            if ejemplo[i] not in meritos[i].keys():
-                meritos[i][ejemplo[i]] = [0, 0]
+            if example[i] not in merit[i].keys():
+                merit[i][example[i]] = [0, 0]
 
-            meritos[i][ejemplo[i]][0] = meritos[i][ejemplo[i]][0] + p
-            meritos[i][ejemplo[i]][1] = meritos[i][ejemplo[i]][1] + n
+            merit[i][example[i]][0] = merit[i][example[i]][0] + p
+            merit[i][example[i]][1] = merit[i][example[i]][1] + n
 
-    resultado_meritos = [[atributo, 0, []] for atributo in atributos[:-1]]
-    menor_merito = ["", 2, []]
+    merit_result = [[attribute, 0, []] for attribute in attributes[:-1]]
+    lower_merit = ["", 2, []]
     for i in range(M):
-        for key, value in meritos[i].items():
+        for key, value in merit[i].items():
             a = (value[0]+value[1])
             p = value[0]/a
             n = value[1]/a
-            resultado_meritos[i][1] = resultado_meritos[i][1] + a/N * infor(p, n)
-            resultado_meritos[i][2].append(key)
+            merit_result[i][1] = merit_result[i][1] + a/N * infor(p, n)
+            merit_result[i][2].append(key)
 
-        if menor_merito[1] > resultado_meritos[i][1]:
-            menor_merito[0] = resultado_meritos[i][0]
-            menor_merito[1] = resultado_meritos[i][1]
-            menor_merito[2] = resultado_meritos[i][2]
+        if lower_merit[1] > merit_result[i][1]:
+            lower_merit[0] = merit_result[i][0]
+            lower_merit[1] = merit_result[i][1]
+            lower_merit[2] = merit_result[i][2]
 
-    menor_merito.append([tp, tn])
-    return menor_merito
+    lower_merit.append([tp, tn])
+    return lower_merit
 
 
 def infor(p, n):
@@ -73,20 +73,20 @@ def infor(p, n):
     return p1 + n1
 
 
-def split_data(atributos, ejemplos, merito):
+def split_data(attributes, examples, merito):
     column = -1
-    for i in range(len(atributos)-1):
-        if atributos[i] == merito[0]:
+    for i in range(len(attributes)-1):
+        if attributes[i] == merito[0]:
             column = i
 
     rows = {respuesta: [] for respuesta in merito[2]}
-    for ejemplo in ejemplos:
-        rows[ejemplo[column]].append([x for i, x in enumerate(ejemplo) if i != column])
+    for example in examples:
+        rows[example[column]].append([x for i, x in enumerate(example) if i != column])
 
-    return [[x for i, x in enumerate(atributos) if i != column], rows]
+    return [[x for i, x in enumerate(attributes) if i != column], rows]
 
 
-def id3(atributos, ejemplos, nodo=Node()):
+def id3(attributes, examples, node=Node()):
     """
         si atributos.vacio o % > umbral entonces
             cerrar arbol
@@ -95,80 +95,81 @@ def id3(atributos, ejemplos, nodo=Node()):
             por cada valor en atributo.valores hacer
                 atributos2 = atributos.quitar(atributo)
                 ejemplos2 = ejemplos.quitar(atributo, !valor)
-                nodo.hijo = id3(atributos2, ejemplos2)
+                node.hijo = id3(atributos2, ejemplos2)
     """
-    atributo = mejor_merito(atributos, ejemplos)
-    nodo.set_name(atributo[0])
-    # print(atributo)
-    if len(atributos) == 1:
-        return nodo
-    elif atributo[1] == 0:
-        if atributo[3][0] == 0:
-            nodo.set_name("no")
-        elif atributo[3][1] == 0:
-            nodo.set_name("si")
+    attribute = best_merit(attributes, examples)
+    node.set_name(attribute[0])
+    # print(attribute)
+    if len(attributes) == 1:
+        return None
+    elif attribute[1] == 0:
+        if attribute[3][0] == 0:
+            node.set_name("no")
+        elif attribute[3][1] == 0:
+            node.set_name("si")
         else:
-            new_data = split_data(atributos, ejemplos, atributo)
-            for edge, ejemplos2 in split_data(atributos, ejemplos, atributo)[1].items():
+            new_data = split_data(attributes, examples, attribute)
+            for edge, examples2 in split_data(attributes, examples, attribute)[1].items():
                 child_node = Node()
-                child_node.set_name(ejemplos2[0][len(ejemplos2[0])-1])
-                nodo.add_child(child_node, edge)
-        return nodo
+                child_node.set_name(examples2[0][len(examples2[0])-1])
+                node.add_child(child_node, edge)
+        return node
     else:
-        new_data = split_data(atributos, ejemplos, atributo)
-        # print(new_data)
-        atributos2 = new_data[0]
-        for edge, ejemplos2 in split_data(atributos, ejemplos, atributo)[1].items():
-            # print(ejemplos2)
-            child_node = id3(atributos2, ejemplos2, Node())
-            nodo.add_child(child_node, edge)
+        new_data = split_data(attributes, examples, attribute)
+        attributes2 = new_data[0]
+        for edge, examples2 in split_data(attributes, examples, attribute)[1].items():
+            child_node = id3(attributes2, examples2, Node())
+            node.add_child(child_node, edge)
         
-        return nodo
+        return node
 
 
-def print_node(nodo, text=""):
-    if len(nodo.get_childs()) > 0:
-        for child in nodo.get_childs():
-            print_node(child[1], text + "(" + nodo.get_name() + " = " + child[0] + ") -> ")
+def print_node(node, text=""):
+    if len(node.get_childs()) > 0:
+        for child in node.get_childs():
+            print_node(child[1], text + "(" + node.get_name() + " = " + child[0] + ") -> ")
     else:
-        print("%s%s" % (text, nodo.get_name()))
+        print("%s%s" % (text, node.get_name()))
 
 
-def check(nodo, atributos, ejemplo):
-    if len(nodo.get_childs()) == 0:
-        return nodo.get_name() == ejemplo[len(ejemplo)-1]
+def check(node, attributes, example):
+    if len(node.get_childs()) == 0:
+        return node.get_name()
     else:
-        for i in range(len(atributos)):
-            if nodo.get_name() == atributos[i]:
-                for child in nodo.get_childs():
-                    if child[0] == ejemplo[i]:
-                        return check(child[1], atributos, ejemplo)
+        for i in range(len(attributes)):
+            if node.get_name() == attributes[i]:
+                for child in node.get_childs():
+                    if child[0] == example[i]:
+                        return check(child[1], attributes, example)
 
-        return False
+        return "No hay reglas para este example"
 
 
 if __name__ == '__main__':
     filepath = "AtributosJuego.txt"
-    atributos = ""
+    attributes = ""
     with open(filepath) as fp:
         lines = fp.read().splitlines()
-        atributos = lines[0].split(",")
+        attributes = lines[0].split(",")
 
     filepath = "Juego.txt"
-    ejemplos = []
+    examples = []
     with open(filepath) as fp:
         lines = fp.read().splitlines()
         for line in lines:
-            ejemplo = line.split(",")
-            if len(ejemplo) > 1:
-                ejemplos.append(ejemplo)
+            example = line.split(",")
+            if len(example) > 1:
+                examples.append(example)
 
-    nodo = id3(atributos, ejemplos)
-    print_node(nodo)
-    cond = True
-    while cond:
-        ejemplo = input("Enter a new example to evaluate: ").split(",")
-        if len(ejemplo) == len(atributos) and type(ejemplo) == list:
-            print(check(nodo, atributos, ejemplo))
-        else:
-            cond = False
+    node = id3(attributes, examples)
+    if node is None:
+        print("Incorrect format")
+    else:
+        print_node(node)
+        cond = True
+        while cond:
+            example = input("Enter a new example to evaluate: ").split(",")
+            if len(example) == (len(attributes)-1) and type(example) == list:
+                print(check(node, attributes, example))
+            else:
+                cond = False
